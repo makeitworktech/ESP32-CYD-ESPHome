@@ -1,0 +1,338 @@
+#
+# Basic yaml code to get the ESP32-2432S028 working in Home Assistant as a 12-button "Stream Deck"
+# ============================================================
+# Author: Aaron Stewart @makeitworktech, with the help of ChatGPT.
+# GitHub: https://github.com/makeitworktech
+#
+# ============================================================ 
+# NOTE:
+# In order for this to work you need to add the following settings in your secrets.yaml file:
+# - api_key
+# - ota_password
+# - wifi_ssid
+# - wifi_password
+# - ap_password
+#
+# Create a folder named fonts in your ESPHome folder, and copy the 
+# files fonts/Arimo-Regular.ttf and fonts/materialdesignicons-webfont.ttf there.
+#
+# ============================================================ 
+# General ESPHome Setup
+# ============================================================
+# Change the naming below, they will be the names used in Home Assistant
+# ESPHome naming
+esphome:
+  name: esp32-cyd-2pt8                  # Device hostname
+  friendly_name: ESP32-CYD-2.8in        # Friendly name shown in Home Assistant
+ 
+# The ESP32-2432S028 uses a standard ESP32-WROVER, so we use esp32dev
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: !secret api_key
+
+# Set OTA password, enables updates via ESPHome
+ota:
+  platform: esphome
+  password: !secret ota_password
+
+# Setup WiFi credentials, references the wifi ssid and pass in secrets.yaml
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot in case wifi connection fails
+  ap:
+    ssid: $device_name Fallback Hotspot
+    password: !secret ap_password
+
+# Allows captive portal access when in fallback mode
+captive_portal:
+
+# ============================================================ 
+# ESPHome Display related setup
+# ============================================================
+# Create a font to use, add and remove glyphs as needed. 
+font:
+  - file:
+      path: c:\esphome-display\fonts/Arimo-Regular.ttf  # Path to main font file
+      type: local
+    id: arimo48                                         # ID used to reference this font
+    size: 48                                            # Font size
+    glyphs:                                             # Characters to include in font. Only 
+      - " .,°0123456789CF"                              # add characters you need to reduce memory usage.
+  - file:                                               # Giving an ID for a larger size of that font.
+      path: c:\esphome-display\fonts/Arimo-Regular.ttf
+      type: local
+    id: arimo14
+    size: 14
+    glyphs:
+      - "0123456789"
+  - file: fonts/materialdesignicons-webfont.ttf         # Defining Material Design Icons as a font. This
+    id: mdi_icons                                       # will allow us to use them as button icons.
+    size: 48                                            # You can get these glyphs from the https://pictogrammers.com/library/mdi/
+    glyphs:                                             # where you choose the icon, and then "copy glyph".
+      - 󱁑  # mdi-led-strip-variant
+      - 󰈐  # mdi-fan
+      - 󰏘  # mdi-pallette
+      - 󰤝  # mdi-wall-sconce-flat
+
+# Defines the colors we want to use later for the different buttons.
+# Per-button customizable colors
+color:
+  - id: button_color_1
+    red: 100%
+    green: 0%
+    blue: 0%
+  - id: button_color_2
+    red: 100%
+    green: 50%
+    blue: 0%
+  - id: button_color_3
+    red: 100%
+    green: 100%
+    blue: 0%
+  - id: button_color_4
+    red: 0%
+    green: 100%
+    blue: 0%
+  - id: button_color_5
+    red: 100%
+    green: 41%
+    blue: 71%
+  - id: button_color_6
+    red: 50%
+    green: 0%
+    blue: 50%
+  - id: button_color_7
+    red: 0%
+    green: 0%
+    blue: 100%
+  - id: button_color_8
+    red: 0%
+    green: 100%
+    blue: 100%
+  - id: button_color_9
+    red: 100%
+    green: 100%
+    blue: 100%
+  - id: button_color_10
+    red: 100%
+    green: 100%
+    blue: 100%
+  - id: button_color_11
+    red: 100%
+    green: 100%
+    blue: 100%
+  - id: button_color_12
+    red: 100%
+    green: 100%
+    blue: 100%
+  - id: black
+    red: 0%
+    green: 0%
+    blue: 0%
+
+# ============================================================ 
+# Home Assistant related setup
+# ============================================================
+
+# Setting the single channel backlight as a light entity in Home Assistant
+light:
+  - platform: monochromatic
+    output: backlight_pwm
+    name: Display Backlight
+    id: backlight
+    restore_mode: ALWAYS_ON
+
+# Define 12 touch zones, each corresponding to one grid button. These will
+# appear in Home Assistant as Binary Sensors with the given names. The x and
+# y values give their location on the screen.
+binary_sensor:
+  - platform: touchscreen
+    name: Button 1
+    x_min: 10
+    x_max: 75
+    y_min: 10
+    y_max: 75
+  - platform: touchscreen
+    name: Button 2
+    x_min: 85
+    x_max: 150
+    y_min: 10
+    y_max: 75
+  - platform: touchscreen
+    name: Button 3
+    x_min: 160
+    x_max: 225
+    y_min: 10
+    y_max: 75
+  - platform: touchscreen
+    name: Button 4
+    x_min: 235
+    x_max: 300
+    y_min: 10
+    y_max: 75
+  - platform: touchscreen
+    name: Button 5
+    x_min: 10
+    x_max: 75
+    y_min: 85
+    y_max: 150
+  - platform: touchscreen
+    name: Button 6
+    x_min: 85
+    x_max: 150
+    y_min: 85
+    y_max: 150
+  - platform: touchscreen
+    name: Button 7
+    x_min: 160
+    x_max: 225
+    y_min: 85
+    y_max: 150
+  - platform: touchscreen
+    name: Button 8
+    x_min: 235
+    x_max: 300
+    y_min: 85
+    y_max: 150
+  - platform: touchscreen
+    name: Button 9
+    x_min: 10
+    x_max: 75
+    y_min: 160
+    y_max: 225
+  - platform: touchscreen
+    name: Button 10
+    x_min: 85
+    x_max: 150
+    y_min: 160
+    y_max: 225
+  - platform: touchscreen
+    name: Button 11
+    x_min: 160
+    x_max: 225
+    y_min: 160
+    y_max: 225
+  - platform: touchscreen
+    name: Button 12
+    x_min: 235
+    x_max: 300
+    y_min: 160
+    y_max: 225
+
+# ============================================================ 
+# Touchscreen Display related setup
+# ============================================================
+
+# SPI bus for TFT display and touch controller
+spi:
+  - id: tft
+    clk_pin: GPIO14
+    mosi_pin: GPIO13
+    miso_pin: GPIO12
+  - id: touch
+    clk_pin: GPIO25
+    mosi_pin: GPIO32
+    miso_pin: GPIO39
+
+# Set a pin to control the backlight
+output:
+  - platform: ledc
+    pin: GPIO21
+    id: backlight_pwm
+
+# Tracks if recent touch occurred
+globals:
+  - id: recent_touch
+    type: bool
+    restore_value: no
+    initial_value: "true"
+
+# Defining the touchscreen for later use
+touchscreen:
+  platform: xpt2046
+  spi_id: touch
+  cs_pin: GPIO33
+  interrupt_pin: GPIO36
+  update_interval: 50ms
+  threshold: 400
+  calibration:
+    x_min: 180
+    x_max: 3800
+    y_min: 240
+    y_max: 3860
+  transform:
+    swap_xy: true
+  on_touch:
+    then:
+      - light.turn_on: backlight
+      - lambda: |-
+          id(recent_touch) = true;
+
+# Defining the display type and properties, and defining the buttons displayed.
+display:
+  - platform: ili9xxx
+    color_palette: 8BIT               # Lower memory usage
+    model: ili9341                    # Display driver model
+    spi_id: tft
+    cs_pin: GPIO15
+    dc_pin: GPIO2
+    invert_colors: false
+    transform:
+      swap_xy: true                   # Orient screen properly
+    dimensions:
+      width: 320
+      height: 240
+    lambda: |-
+      it.fill(Color::BLACK);  // Clear screen background
+
+      // Define per-button icon colors
+      Color icon_colors[12] = {
+        id(button_color_1), id(button_color_2), id(button_color_3), id(button_color_4),
+        id(button_color_5), id(button_color_6), id(button_color_7), id(button_color_8),
+        id(button_color_9), id(button_color_10), id(button_color_11), id(button_color_12)
+      };
+
+      // Define icons for all 12 buttons
+      const char *icons[12] = {
+        "󰏘", // mdi-palette
+        "󰏘", // mdi-palette
+        "󰏘", // mdi-palette
+        "󰏘", // mdi-palette
+        "󰏘", // mdi-palette
+        "󰏘", // mdi-palette
+        "󰏘", // mdi-palette
+        "󰏘", // mdi-palette
+        "󰏘", // mdi-palette
+        "󱁑", // mdi-led-strip-variant
+        "󰈐", // mdi-fan
+        "󰤝"  // mdi-wall-sconce-flat
+      };
+
+      for (int row = 0; row < 3; row++) {
+        for (int col = 0; col < 4; col++) {
+          int btn = row * 4 + col;
+          int x = 10 + col * 75;
+          int y = 10 + row * 75;
+
+          // Shadow (slightly offset dark rectangle)
+          it.filled_rectangle(x + 2, y + 2, 65, 65, Color(0x20, 0x20, 0x20));
+
+          // Black button background
+          it.filled_rectangle(x, y, 65, 65, id(black));
+
+          // Button icon with per-button color
+          it.print(x + 32, y + 32, id(mdi_icons), icon_colors[btn], TextAlign::CENTER, icons[btn]);
+        }
+      }
+
