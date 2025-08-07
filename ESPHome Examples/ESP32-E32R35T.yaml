@@ -1,5 +1,5 @@
 #
-# Basic yaml code to get the ESP32-3248S035C working in Home Assistant as a 12-button "Stream Deck"
+# Basic yaml code to get the ESP32-32R35T working in Home Assistant as a 12-button "Stream Deck"
 # ============================================================
 # Author: Aaron Stewart @makeitworktech, with the help of ChatGPT.
 # GitHub: https://github.com/makeitworktech
@@ -25,7 +25,7 @@ esphome:
   name: esp32-E32R35T                    # Device hostname
   friendly_name: ESP32-CYD 3.5in E32R35T           # Friendly name shown in Home Assistant
 
-# The ESP32-3248S035C uses a standard ESP32-WROVER, so we use esp32dev
+# The ESP32-32R35T uses a standard ESP32-WROVER, so we use esp32dev
 esp32:
   board: esp32dev                  # Target board type
   framework:
