@@ -3,7 +3,7 @@
 # ============================================================
 # Author: Aaron Stewart @makeitworktech, with the help of ChatGPT.
 # GitHub: https://github.com/makeitworktech
-#
+# Product Info: https://www.lcdwiki.com/3.5inch_ESP32-32E_Display
 # ============================================================ 
 # NOTE:
 # In order for this to work you need to add the following settings in your secrets.yaml file:
@@ -22,8 +22,8 @@
 # Change the naming below, they will be the names used in Home Assistant
 # ESPHome Naming
 esphome:
-  name: display3-5                  # Device hostname
-  friendly_name: display3_5        # Friendly name shown in Home Assistant
+  name: esp32-3248S035C                    # Device hostname
+  friendly_name: ESP32-CYD 3.5in 3248S035C # Friendly name shown in Home Assistant
 
 # The ESP32-3248S035C uses a standard ESP32-WROVER, so we use esp32dev
 esp32:
@@ -82,8 +82,11 @@ font:
     glyphs:                                             # where you choose the icon, and then "copy glyph".
       - "󰏘"  # Palette icon
       - "󱁑"  # LED Strip icon
-      - "󰤝"  # Wall Sconce icon
+      - "󰤝"  # Sconce icon
       - "󰈐"  # Fan icon
+      - "󱩋"  # LED Strip icon off
+      - "󰠝"  # fan off
+      - "󱟉"  # Sconce outline
 
 
 # Defines the colors we want to use later for the different buttons.
@@ -91,7 +94,7 @@ font:
 color:
   - id: room_bg_color
     hex: "000000"
-  - id: default_button_text_color
+  - id: default_button_bg_color
     hex: "000000"
   - id: default_button_pressed_bg_color
     hex: "D3D3D3"
@@ -126,20 +129,22 @@ color:
 
 # ==== Lights ====
 light:
+# LCD backlight
   - platform: monochromatic
     output: backlight_pwm
-    name: '"Display Backlight"'
+    name: "Display Backlight"
     id: backlight
     restore_mode: ALWAYS_ON
-    internal: True
+# onboard rgb led
   - platform: rgb
-    name: "Rear LED"
-    id: rear_led
+    name: "Front LED"
+    id: front_led
     restore_mode: ALWAYS_OFF
     red: led_red
     green: led_green
     blue: led_blue
-    internal: true
+
+
 
 # ==== Touch Button Sensors for Home Assistant ====
 binary_sensor:
@@ -180,11 +185,85 @@ binary_sensor:
     name: "Button 12"
     id: button_12_pressed
 
+# These sensors mirror the state of Home Assistant entities on boot,
+# or whenever the entity's state changes. 
+text_sensor:
+  - platform: homeassistant
+    id: ts_office_ambient
+    entity_id: light.office_ambient_lights
+    on_value:
+      then:
+        - lvgl.widget.update:
+            id: btn_10
+            state:
+              checked: !lambda return (0 == x.compare(std::string{"on"}));
+              disabled: !lambda return ((0 == x.compare(std::string{"unavailable"})) or (0 == x.compare(std::string{"unknown"})));
+        - lvgl.label.update:
+            id: lbl_btn_10
+            text: !lambda |-
+              static char buf[10];
+              std::string icon;
+              if (0 == x.compare(std::string{"on"})) {
+                  icon = "󱁑";  // mdi:led-strip-variant
+              } else {
+                  icon = "󱩋";  // mdi:led-strip-variant-off
+              }
+              snprintf(buf, sizeof(buf), "%s", icon.c_str());
+              return buf;
+
+  - platform: homeassistant
+    id: ts_office_fan_plug
+    entity_id: switch.office_fan_plug
+    on_value:
+      then:
+        - lvgl.widget.update:
+            id: btn_11
+            state:
+              checked: !lambda return (0 == x.compare(std::string{"on"}));
+              disabled: !lambda return ((0 == x.compare(std::string{"unavailable"})) or (0 == x.compare(std::string{"unknown"})));
+        - lvgl.label.update:
+            id: lbl_btn_11
+            text: !lambda |-
+              static char buf[10];
+              std::string icon;
+              if (0 == x.compare(std::string{"on"})) {
+                  icon = "󰈐";  // mdi:fan
+              } else {
+                  icon = "󰠝";  // mdi:fan-off
+              }
+              snprintf(buf, sizeof(buf), "%s", icon.c_str());
+              return buf;
+
+  - platform: homeassistant
+    id: ts_office_light
+    entity_id: light.office_light
+    on_value:
+      then:
+        - lvgl.widget.update:
+            id: btn_12
+            state:
+              checked: !lambda return (0 == x.compare(std::string{"on"}));
+              disabled: !lambda return ((0 == x.compare(std::string{"unavailable"})) or (0 == x.compare(std::string{"unknown"})));
+        - lvgl.label.update:
+            id: lbl_btn_12
+            text: !lambda |-
+              static char buf[10];
+              std::string icon;
+              if (0 == x.compare(std::string{"on"})) {
+                  icon = "󰤝";  // mdi:wall-sconce-flat
+              } else {
+                  icon = "󱟉";  // mdi:wall-sconce-flat-outline
+              }
+              snprintf(buf, sizeof(buf), "%s", icon.c_str());
+              return buf;
+
+
+
 # ============================================================ 
 # Touchscreen Display related setup
 # ============================================================
 
-# Set pins to control the backlight and RGB LED 
+# Set pins to control the backlight and RGB LED. Still haven't figured this out yet. 
 output:
   - platform: ledc
     pin: GPIO27
@@ -194,13 +273,14 @@ output:
     id: led_red
     inverted: true
   - platform: ledc
-    pin: GPIO16
-    id: led_green
+    pin: GPIO16  # This was green
+    id: led_blue # ← renamed
     inverted: true
   - platform: ledc
-    pin: GPIO17
-    id: led_blue
+    pin: GPIO17  # This was blue
+    id: led_green # ← renamed
     inverted: true
+
 
 # SPI bus for TFT display and touch controller
 spi:
@@ -259,6 +339,25 @@ display:
 
 # Defining the buttons displayed
 lvgl:
+  buffer_size: 25%
+  theme:
+    button:
+      # This base is overridden by each button's bg_color
+      bg_color: 0x000000
+      bg_opa: COVER
+      border_color: 0x000000
+      border_width: 1
+      text_color: 0xFFFFFF  # overridden per label using text_color: btn_x_color
+      pressed:
+        # Light grey for pressed state (used uniformly)
+        bg_color: 0xC0C0C0
+        bg_grad_color: 0xC0C0C0
+        bg_opa: COVER
+      checked:
+        bg_color: 0x000000
+        bg_grad_color: 0x000000
+        bg_opa: COVER
+        text_color: 0x800080 # purple icon when "checked"... entity is on
   pages:
     - id: main_page
       pad_all: 0
@@ -280,7 +379,7 @@ lvgl:
                   grid_cell_row_pos: 0
                   grid_cell_x_align: STRETCH
                   grid_cell_y_align: STRETCH
-                  bg_color: default_button_text_color
+                  bg_color: default_button_bg_color
                   pressed:
                     bg_color: default_button_pressed_bg_color
                   widgets:
@@ -306,7 +405,7 @@ lvgl:
                   grid_cell_row_pos: 0
                   grid_cell_x_align: STRETCH
                   grid_cell_y_align: STRETCH
-                  bg_color: default_button_text_color
+                  bg_color: default_button_bg_color
                   pressed:
                     bg_color: default_button_pressed_bg_color
                   widgets:
@@ -332,7 +431,7 @@ lvgl:
                   grid_cell_row_pos: 0
                   grid_cell_x_align: STRETCH
                   grid_cell_y_align: STRETCH
-                  bg_color: default_button_text_color
+                  bg_color: default_button_bg_color
                   pressed:
                     bg_color: default_button_pressed_bg_color
                   widgets:
@@ -358,7 +457,7 @@ lvgl:
                   grid_cell_row_pos: 0
                   grid_cell_x_align: STRETCH
                   grid_cell_y_align: STRETCH
-                  bg_color: default_button_text_color
+                  bg_color: default_button_bg_color
                   pressed:
                     bg_color: default_button_pressed_bg_color
                   widgets:
@@ -384,7 +483,7 @@ lvgl:
                   grid_cell_row_pos: 1
                   grid_cell_x_align: STRETCH
                   grid_cell_y_align: STRETCH
-                  bg_color: default_button_text_color
+                  bg_color: default_button_bg_color
                   pressed:
                     bg_color: default_button_pressed_bg_color
                   widgets:
@@ -410,7 +509,7 @@ lvgl:
                   grid_cell_row_pos: 1
                   grid_cell_x_align: STRETCH
                   grid_cell_y_align: STRETCH
-                  bg_color: default_button_text_color
+                  bg_color: default_button_bg_color
                   pressed:
                     bg_color: default_button_pressed_bg_color
                   widgets:
@@ -436,7 +535,7 @@ lvgl:
                   grid_cell_row_pos: 1
                   grid_cell_x_align: STRETCH
                   grid_cell_y_align: STRETCH
-                  bg_color: default_button_text_color
+                  bg_color: default_button_bg_color
                   pressed:
                     bg_color: default_button_pressed_bg_color
                   widgets:
@@ -462,7 +561,7 @@ lvgl:
                   grid_cell_row_pos: 1
                   grid_cell_x_align: STRETCH
                   grid_cell_y_align: STRETCH
-                  bg_color: default_button_text_color
+                  bg_color: default_button_bg_color
                   pressed:
                     bg_color: default_button_pressed_bg_color
                   widgets:
@@ -488,7 +587,7 @@ lvgl:
                   grid_cell_row_pos: 2
                   grid_cell_x_align: STRETCH
                   grid_cell_y_align: STRETCH
-                  bg_color: default_button_text_color
+                  bg_color: default_button_bg_color
                   pressed:
                     bg_color: default_button_pressed_bg_color
                   widgets:
@@ -507,25 +606,25 @@ lvgl:
                       - binary_sensor.template.publish:
                           id: button_9_pressed
                           state: OFF
-
               - button:
                   id: btn_10
                   grid_cell_column_pos: 1
                   grid_cell_row_pos: 2
                   grid_cell_x_align: STRETCH
                   grid_cell_y_align: STRETCH
-                  bg_color: default_button_text_color
-                  pressed:
-                    bg_color: default_button_pressed_bg_color
+                  checkable: true
                   widgets:
                     - label:
                         id: lbl_btn_10
                         text: "󱁑"
                         text_font: font_mdi
-                        text_color: btn_10_color
                         align: center
                   on_click:
                     then:
+                      - homeassistant.action:
+                          action: light.toggle
+                          data:
+                            entity_id: light.office_ambient_lights
                       - binary_sensor.template.publish:
                           id: button_10_pressed
                           state: ON
@@ -533,25 +632,25 @@ lvgl:
                       - binary_sensor.template.publish:
                           id: button_10_pressed
                           state: OFF
-
               - button:
                   id: btn_11
                   grid_cell_column_pos: 2
                   grid_cell_row_pos: 2
                   grid_cell_x_align: STRETCH
                   grid_cell_y_align: STRETCH
-                  bg_color: default_button_text_color
-                  pressed:
-                    bg_color: default_button_pressed_bg_color
+                  checkable: true
                   widgets:
                     - label:
                         id: lbl_btn_11
                         text: "󰈐"
                         text_font: font_mdi
-                        text_color: btn_11_color
                         align: center
                   on_click:
                     then:
+                      - homeassistant.action:
+                          action: switch.toggle
+                          data:
+                            entity_id: switch.office_fan_plug
                       - binary_sensor.template.publish:
                           id: button_11_pressed
                           state: ON
@@ -566,18 +665,19 @@ lvgl:
                   grid_cell_row_pos: 2
                   grid_cell_x_align: STRETCH
                   grid_cell_y_align: STRETCH
-                  bg_color: default_button_text_color
-                  pressed:
-                    bg_color: default_button_pressed_bg_color
+                  checkable: true
                   widgets:
                     - label:
                         id: lbl_btn_12
                         text: "󰤝"
                         text_font: font_mdi
-                        text_color: btn_12_color
                         align: center
                   on_click:
                     then:
+                      - homeassistant.action:
+                          action: light.toggle
+                          data:
+                            entity_id: light.office_light
                       - binary_sensor.template.publish:
                           id: button_12_pressed
                           state: ON
