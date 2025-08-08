@@ -22,7 +22,7 @@
 # Change the naming below, they will be the names used in Home Assistant
 # ESPHome Naming
 esphome:
-  name: esp32-3248S035C                    # Device hostname
+  name: esp32-3248S035c                    # Device hostname
   friendly_name: ESP32-CYD 3.5in 3248S035C # Friendly name shown in Home Assistant
 
 # The ESP32-3248S035C uses a standard ESP32-WROVER, so we use esp32dev
