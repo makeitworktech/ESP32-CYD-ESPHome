@@ -23,7 +23,7 @@
 # ESPHome Naming
 
 esphome:
-  name: esp32-E32R40T
+  name: esp32-e32r40t
   friendly_name: ESP32-CYD 4in E32R40T
 
 esp32:
