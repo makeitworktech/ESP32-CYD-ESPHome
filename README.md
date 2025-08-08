@@ -12,6 +12,14 @@ Thanks for reading!
 
 Aaron
 
+# Helpful Resources
+ESPHome LVGL: https://esphome.io/components/lvgl/index.html
+
+ESPHome LVLG Tips & Tricks: https://esphome.io/cookbook/lvgl.html
+
+WitnessMeNow: https://github.com/witnessmenow
+
+
 # Prerequisites
 1. An ESP32 CYD. The best ones are the ones defined here
     - ESP32-E32R28T: https://www.lcdwiki.com/2.8inch_ESP32-32E_Display
@@ -67,4 +75,6 @@ Speaking of those buttons, next we have three text sensors, which mirror the sta
 The next section is called LVGL, and that stands for "Light and Versatile Graphics Library" — it's an open-source graphics library designed for embedded systems like microcontrollers – in this case the ESP32. In the context of ESPHome, LVGL allows you to create interactive GUIs on devices with touchscreens and displays. What I’ve done with it here is just barely scratching the surface of what it’s capable of, and there is excellent documentation for LVGL in the ESPHome context that I’ve linked in the description if you want to customize further.
 The first thing you’ll see is a theme section, and this is where we define the color of button icons that are pressed, checked, etc. This allows us to set the colors for all buttons, although we can override the theme with individual color assignments further down in this section. Using the theme is what allows us to dynamically change the icon color
 In this next section we have defined 12 buttons in a grid. Beside the last three, each button has a background color, a pressed color, a text label, and a text color. Changing any of these color options up in the colors section will affect the properties as shown here. If you want to change the icon displayed, you need to first go up to the fonts and add the icon’s glyph and then you can change it down here.
+
+
 
