@@ -22,7 +22,7 @@
 # Change the naming below, they will be the names used in Home Assistant
 # ESPHome Naming
 esphome:
-  name: esp32-E32R35T                    # Device hostname
+  name: esp32-e32r35t                    # Device hostname
   friendly_name: ESP32-CYD 3.5in E32R35T           # Friendly name shown in Home Assistant
 
 # The ESP32-32R35T uses a standard ESP32-WROVER, so we use esp32dev
