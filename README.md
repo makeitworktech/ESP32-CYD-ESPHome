@@ -12,6 +12,8 @@ Thanks for reading!
 
 Aaron
 
+<img src="thumbnail - esp32cyd.png" alt="Alt text" width="400"/>
+
 # Helpful Resources
 ESPHome LVGL: https://esphome.io/components/lvgl/index.html
 
