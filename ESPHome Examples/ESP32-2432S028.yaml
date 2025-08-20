@@ -4,6 +4,9 @@
 # Author: Aaron Stewart @makeitworktech, with the help of ChatGPT.
 # GitHub: https://github.com/makeitworktech
 #
+# modified 20 Aug 2025 Larry Goodale @TTechGuy to make the button presses work correctly
+# adding in missing code from other yaml files and adding in substitutions for fonts, etc 
+#
 # ============================================================ 
 # NOTE:
 # In order for this to work you need to add the following settings in your secrets.yaml file:
@@ -20,10 +23,18 @@
 # General ESPHome Setup
 # ============================================================
 # Change the naming below, they will be the names used in Home Assistant
+
+substitutions:     # Modify these to fit your needs
+  font_direcotry: D:\Repos\esphome-display\fonts\
+  width: 320
+  height: 240
+  device_name: esp32-cyd-2pt8
+  nice_name: ESP32-CYD-2.8in
+
 # ESPHome naming
 esphome:
-  name: esp32-cyd-2pt8                  # Device hostname
-  friendly_name: ESP32-CYD-2.8in        # Friendly name shown in Home Assistant
+  name: ${device_name}                  # Device hostname
+  friendly_name: ${nice_name}           # Friendly name shown in Home Assistant
  
 # The ESP32-2432S028 uses a standard ESP32-WROVER, so we use esp32dev
 esp32:
@@ -63,20 +74,20 @@ captive_portal:
 # Create a font to use, add and remove glyphs as needed. 
 font:
   - file:
-      path: c:\esphome-display\fonts/Arimo-Regular.ttf  # Path to main font file
+      path: ${font_direcotry}Arimo-Regular.ttf  # Path to main font file
       type: local
     id: arimo48                                         # ID used to reference this font
     size: 48                                            # Font size
     glyphs:                                             # Characters to include in font. Only 
       - " .,°0123456789CF"                              # add characters you need to reduce memory usage.
   - file:                                               # Giving an ID for a larger size of that font.
-      path: c:\esphome-display\fonts/Arimo-Regular.ttf
+      path: ${font_direcotry}Arimo-Regular.ttf
       type: local
     id: arimo14
     size: 14
     glyphs:
       - "0123456789"
-  - file: fonts/materialdesignicons-webfont.ttf         # Defining Material Design Icons as a font. This
+  - file: ${font_direcotry}materialdesignicons-webfont.ttf         # Defining Material Design Icons as a font. This
     id: mdi_icons                                       # will allow us to use them as button icons.
     size: 48                                            # You can get these glyphs from the https://pictogrammers.com/library/mdi/
     glyphs:                                             # where you choose the icon, and then "copy glyph".
@@ -88,147 +99,172 @@ font:
 # Defines the colors we want to use later for the different buttons.
 # Per-button customizable colors
 color:
-  - id: button_color_1
-    red: 100%
-    green: 0%
-    blue: 0%
-  - id: button_color_2
-    red: 100%
-    green: 50%
-    blue: 0%
-  - id: button_color_3
-    red: 100%
-    green: 100%
-    blue: 0%
-  - id: button_color_4
-    red: 0%
-    green: 100%
-    blue: 0%
-  - id: button_color_5
-    red: 100%
-    green: 41%
-    blue: 71%
-  - id: button_color_6
-    red: 50%
-    green: 0%
-    blue: 50%
-  - id: button_color_7
-    red: 0%
-    green: 0%
-    blue: 100%
-  - id: button_color_8
-    red: 0%
-    green: 100%
-    blue: 100%
-  - id: button_color_9
-    red: 100%
-    green: 100%
-    blue: 100%
-  - id: button_color_10
-    red: 100%
-    green: 100%
-    blue: 100%
-  - id: button_color_11
-    red: 100%
-    green: 100%
-    blue: 100%
-  - id: button_color_12
-    red: 100%
-    green: 100%
-    blue: 100%
-  - id: black
-    red: 0%
-    green: 0%
-    blue: 0%
+  - id: room_bg_color
+    hex: "000000"
+  - id: default_button_bg_color
+    hex: "000000"
+  - id: default_button_pressed_bg_color
+    hex: "D3D3D3"
+  - id: btn_1_color
+    hex: FF0000                    # Red
+  - id: btn_2_color
+    hex: FF7F00                    # Orange
+  - id: btn_3_color
+    hex: FFFF00                    # Yellow
+  - id: btn_4_color
+    hex: 00FF00                    # Green
+  - id: btn_5_color
+    hex: FF1493                    # Pink
+  - id: btn_6_color
+    hex: "800080"                  # Purple
+  - id: btn_7_color
+    hex: 0000FF                    # Blue
+  - id: btn_8_color
+    hex: 00FFFF                    # Aqua
+  - id: btn_9_color
+    hex: "FFFFFF"                  # White
+  - id: btn_10_color
+    hex: "FFFFFF"                  # White
+  - id: btn_11_color
+    hex: "FFFFFF"                  # White
+  - id: btn_12_color
+    hex: "FFFFFF"                  # White
 
 # ============================================================ 
 # Home Assistant related setup
 # ============================================================
 
-# Setting the single channel backlight as a light entity in Home Assistant
+# ==== Lights ====
 light:
+# LCD backlight
   - platform: monochromatic
     output: backlight_pwm
-    name: Display Backlight
+    name: "Display Backlight"
     id: backlight
     restore_mode: ALWAYS_ON
+# onboard rgb led
+  - platform: rgb
+    name: "Front LED"
+    id: front_led
+    restore_mode: ALWAYS_OFF
+    red: led_red
+    green: led_green
+    blue: led_blue
 
-# Define 12 touch zones, each corresponding to one grid button. These will
-# appear in Home Assistant as Binary Sensors with the given names. The x and
-# y values give their location on the screen.
+
+
+# ==== Touch Button Sensors for Home Assistant ====
 binary_sensor:
-  - platform: touchscreen
-    name: Button 1
-    x_min: 10
-    x_max: 75
-    y_min: 10
-    y_max: 75
-  - platform: touchscreen
-    name: Button 2
-    x_min: 85
-    x_max: 150
-    y_min: 10
-    y_max: 75
-  - platform: touchscreen
-    name: Button 3
-    x_min: 160
-    x_max: 225
-    y_min: 10
-    y_max: 75
-  - platform: touchscreen
-    name: Button 4
-    x_min: 235
-    x_max: 300
-    y_min: 10
-    y_max: 75
-  - platform: touchscreen
-    name: Button 5
-    x_min: 10
-    x_max: 75
-    y_min: 85
-    y_max: 150
-  - platform: touchscreen
-    name: Button 6
-    x_min: 85
-    x_max: 150
-    y_min: 85
-    y_max: 150
-  - platform: touchscreen
-    name: Button 7
-    x_min: 160
-    x_max: 225
-    y_min: 85
-    y_max: 150
-  - platform: touchscreen
-    name: Button 8
-    x_min: 235
-    x_max: 300
-    y_min: 85
-    y_max: 150
-  - platform: touchscreen
-    name: Button 9
-    x_min: 10
-    x_max: 75
-    y_min: 160
-    y_max: 225
-  - platform: touchscreen
-    name: Button 10
-    x_min: 85
-    x_max: 150
-    y_min: 160
-    y_max: 225
-  - platform: touchscreen
-    name: Button 11
-    x_min: 160
-    x_max: 225
-    y_min: 160
-    y_max: 225
-  - platform: touchscreen
-    name: Button 12
-    x_min: 235
-    x_max: 300
-    y_min: 160
-    y_max: 225
+  - platform: template
+    name: "Button 1"
+    id: button_1_pressed
+  - platform: template
+    name: "Button 2"
+    id: button_2_pressed
+  - platform: template
+    name: "Button 3"
+    id: button_3_pressed
+  - platform: template
+    name: "Button 4"
+    id: button_4_pressed
+  - platform: template
+    name: "Button 5"
+    id: button_5_pressed
+  - platform: template
+    name: "Button 6"
+    id: button_6_pressed
+  - platform: template
+    name: "Button 7"
+    id: button_7_pressed
+  - platform: template
+    name: "Button 8"
+    id: button_8_pressed
+  - platform: template
+    name: "Button 9"
+    id: button_9_pressed
+  - platform: template
+    name: "Button 10"
+    id: button_10_pressed
+  - platform: template
+    name: "Button 11"
+    id: button_11_pressed
+  - platform: template
+    name: "Button 12"
+    id: button_12_pressed
+
+# These sensors mirror the state of Home Assistant entities on boot,
+# or whenever the entity's state changes. 
+text_sensor:
+  - platform: homeassistant
+    id: ts_office_ambient
+    entity_id: light.office_ambient_lights
+    on_value:
+      then:
+        - lvgl.widget.update:
+            id: btn_10
+            state:
+              checked: !lambda return (0 == x.compare(std::string{"on"}));
+              disabled: !lambda return ((0 == x.compare(std::string{"unavailable"})) or (0 == x.compare(std::string{"unknown"})));
+        - lvgl.label.update:
+            id: lbl_btn_10
+            text: !lambda |-
+              static char buf[10];
+              std::string icon;
+              if (0 == x.compare(std::string{"on"})) {
+                  icon = "󱁑";  // mdi:led-strip-variant
+              } else {
+                  icon = "󱩋";  // mdi:led-strip-variant-off
+              }
+              snprintf(buf, sizeof(buf), "%s", icon.c_str());
+              return buf;
+
+  - platform: homeassistant
+    id: ts_office_fan_plug
+    entity_id: switch.office_fan_plug
+    on_value:
+      then:
+        - lvgl.widget.update:
+            id: btn_11
+            state:
+              checked: !lambda return (0 == x.compare(std::string{"on"}));
+              disabled: !lambda return ((0 == x.compare(std::string{"unavailable"})) or (0 == x.compare(std::string{"unknown"})));
+        - lvgl.label.update:
+            id: lbl_btn_11
+            text: !lambda |-
+              static char buf[10];
+              std::string icon;
+              if (0 == x.compare(std::string{"on"})) {
+                  icon = "󰈐";  // mdi:fan
+              } else {
+                  icon = "󰠝";  // mdi:fan-off
+              }
+              snprintf(buf, sizeof(buf), "%s", icon.c_str());
+              return buf;
+
+  - platform: homeassistant
+    id: ts_office_light
+    entity_id: light.office_light
+    on_value:
+      then:
+        - lvgl.widget.update:
+            id: btn_12
+            state:
+              checked: !lambda return (0 == x.compare(std::string{"on"}));
+              disabled: !lambda return ((0 == x.compare(std::string{"unavailable"})) or (0 == x.compare(std::string{"unknown"})));
+        - lvgl.label.update:
+            id: lbl_btn_12
+            text: !lambda |-
+              static char buf[10];
+              std::string icon;
+              if (0 == x.compare(std::string{"on"})) {
+                  icon = "󰤝";  // mdi:wall-sconce-flat
+              } else {
+                  icon = "󱟉";  // mdi:wall-sconce-flat-outline
+              }
+              snprintf(buf, sizeof(buf), "%s", icon.c_str());
+              return buf;
+
+
 
 # ============================================================ 
 # Touchscreen Display related setup
@@ -239,7 +275,7 @@ spi:
   - id: tft
     clk_pin: GPIO14
     mosi_pin: GPIO13
-    miso_pin: GPIO12
+    # miso_pin: GPIO12
   - id: touch
     clk_pin: GPIO25
     mosi_pin: GPIO32
@@ -250,6 +286,20 @@ output:
   - platform: ledc
     pin: GPIO21
     id: backlight_pwm
+    frequency: 1000 Hz
+    inverted: false
+  - platform: ledc
+    pin: GPIO04
+    id: led_red
+    inverted: true
+  - platform: ledc
+    pin: GPIO17  
+    id: led_blue 
+    inverted: true
+  - platform: ledc
+    pin: GPIO16  
+    id: led_green 
+    inverted: true
 
 # Tracks if recent touch occurred
 globals:
@@ -273,6 +323,7 @@ touchscreen:
     y_max: 3860
   transform:
     swap_xy: true
+    # mirror_x: true  # If you need to swap bottom to top for touch, uncomment this so it registers correctly
   on_touch:
     then:
       - light.turn_on: backlight
@@ -283,56 +334,367 @@ touchscreen:
 display:
   - platform: ili9xxx
     color_palette: 8BIT               # Lower memory usage
-    model: ili9341                    # Display driver model
+    model: ST7789V                    # Display driver model
     spi_id: tft
-    cs_pin: GPIO15
-    dc_pin: GPIO2
+    cs_pin: 
+      number: GPIO15
+      ignore_strapping_warning: true
+    dc_pin:
+      number: GPIO2
+      ignore_strapping_warning: true
     invert_colors: false
     transform:
       swap_xy: true                   # Orient screen properly
+      mirror_x: true                  # if your top row is on the bottom, comment this line out or swtich to false
     dimensions:
-      width: 320
-      height: 240
-    lambda: |-
-      it.fill(Color::BLACK);  // Clear screen background
+      width: ${width}
+      height: ${height}
 
-      // Define per-button icon colors
-      Color icon_colors[12] = {
-        id(button_color_1), id(button_color_2), id(button_color_3), id(button_color_4),
-        id(button_color_5), id(button_color_6), id(button_color_7), id(button_color_8),
-        id(button_color_9), id(button_color_10), id(button_color_11), id(button_color_12)
-      };
+# Defining the buttons displayed
+lvgl:
+  buffer_size: 25%
+  theme:
+    button:
+      # This base is overridden by each button's bg_color
+      bg_color: 0x000000
+      bg_opa: COVER
+      border_color: 0x000000
+      border_width: 1
+      text_color: 0xFFFFFF  # overridden per label using text_color: btn_x_color
+      pressed:
+        # Light grey for pressed state (used uniformly)
+        bg_color: 0xC0C0C0
+        bg_grad_color: 0xC0C0C0
+        bg_opa: COVER
+      checked:
+        bg_color: 0x000000
+        bg_grad_color: 0x000000
+        bg_opa: COVER
+        text_color: 0x800080 # purple icon when "checked"... entity is on
+  pages:
+    - id: main_page
+      pad_all: 0
+      widgets:
+        - obj:
+            width: ${width}
+            height: ${height}
+            bg_color: room_bg_color
+            layout:
+              type: grid
+              grid_columns: [fr(1), fr(1), fr(1), fr(1)]
+              grid_rows: [fr(1), fr(1), fr(1)]
+            pad_all: 5px
+            outline_pad: 5px
+            widgets:
+              - button:
+                  id: btn_1
+                  grid_cell_column_pos: 0
+                  grid_cell_row_pos: 0
+                  grid_cell_x_align: STRETCH
+                  grid_cell_y_align: STRETCH
+                  bg_color: default_button_bg_color
+                  pressed:
+                    bg_color: default_button_pressed_bg_color
+                  widgets:
+                    - label:
+                        id: lbl_btn_1
+                        text: "󰏘"
+                        text_font: mdi_icons
+                        text_color: btn_1_color
+                        align: center
+                  on_click:
+                    then:
+                      - binary_sensor.template.publish:
+                          id: button_1_pressed
+                          state: ON
+                      - delay: 500ms
+                      - binary_sensor.template.publish:
+                          id: button_1_pressed
+                          state: OFF
 
-      // Define icons for all 12 buttons
-      const char *icons[12] = {
-        "󰏘", // mdi-palette
-        "󰏘", // mdi-palette
-        "󰏘", // mdi-palette
-        "󰏘", // mdi-palette
-        "󰏘", // mdi-palette
-        "󰏘", // mdi-palette
-        "󰏘", // mdi-palette
-        "󰏘", // mdi-palette
-        "󰏘", // mdi-palette
-        "󱁑", // mdi-led-strip-variant
-        "󰈐", // mdi-fan
-        "󰤝"  // mdi-wall-sconce-flat
-      };
+              - button:
+                  id: btn_2
+                  grid_cell_column_pos: 1
+                  grid_cell_row_pos: 0
+                  grid_cell_x_align: STRETCH
+                  grid_cell_y_align: STRETCH
+                  bg_color: default_button_bg_color
+                  pressed:
+                    bg_color: default_button_pressed_bg_color
+                  widgets:
+                    - label:
+                        id: lbl_btn_2
+                        text: "󰏘"
+                        text_font: mdi_icons
+                        text_color: btn_2_color
+                        align: center
+                  on_click:
+                    then:
+                      - binary_sensor.template.publish:
+                          id: button_2_pressed
+                          state: ON
+                      - delay: 500ms
+                      - binary_sensor.template.publish:
+                          id: button_2_pressed
+                          state: OFF
 
-      for (int row = 0; row < 3; row++) {
-        for (int col = 0; col < 4; col++) {
-          int btn = row * 4 + col;
-          int x = 10 + col * 75;
-          int y = 10 + row * 75;
+              - button:
+                  id: btn_3
+                  grid_cell_column_pos: 2
+                  grid_cell_row_pos: 0
+                  grid_cell_x_align: STRETCH
+                  grid_cell_y_align: STRETCH
+                  bg_color: default_button_bg_color
+                  pressed:
+                    bg_color: default_button_pressed_bg_color
+                  widgets:
+                    - label:
+                        id: lbl_btn_3
+                        text: "󰏘"
+                        text_font: mdi_icons
+                        text_color: btn_3_color
+                        align: center
+                  on_click:
+                    then:
+                      - binary_sensor.template.publish:
+                          id: button_3_pressed
+                          state: ON
+                      - delay: 500ms
+                      - binary_sensor.template.publish:
+                          id: button_3_pressed
+                          state: OFF
 
-          // Shadow (slightly offset dark rectangle)
-          it.filled_rectangle(x + 2, y + 2, 65, 65, Color(0x20, 0x20, 0x20));
+              - button:
+                  id: btn_4
+                  grid_cell_column_pos: 3
+                  grid_cell_row_pos: 0
+                  grid_cell_x_align: STRETCH
+                  grid_cell_y_align: STRETCH
+                  bg_color: default_button_bg_color
+                  pressed:
+                    bg_color: default_button_pressed_bg_color
+                  widgets:
+                    - label:
+                        id: lbl_btn_4
+                        text: "󰏘"
+                        text_font: mdi_icons
+                        text_color: btn_4_color
+                        align: center
+                  on_click:
+                    then:
+                      - binary_sensor.template.publish:
+                          id: button_4_pressed
+                          state: ON
+                      - delay: 500ms
+                      - binary_sensor.template.publish:
+                          id: button_4_pressed
+                          state: OFF
 
-          // Black button background
-          it.filled_rectangle(x, y, 65, 65, id(black));
+              - button:
+                  id: btn_5
+                  grid_cell_column_pos: 0
+                  grid_cell_row_pos: 1
+                  grid_cell_x_align: STRETCH
+                  grid_cell_y_align: STRETCH
+                  bg_color: default_button_bg_color
+                  pressed:
+                    bg_color: default_button_pressed_bg_color
+                  widgets:
+                    - label:
+                        id: lbl_btn_5
+                        text: "󰏘"
+                        text_font: mdi_icons
+                        text_color: btn_5_color
+                        align: center
+                  on_click:
+                    then:
+                      - binary_sensor.template.publish:
+                          id: button_5_pressed
+                          state: ON
+                      - delay: 500ms
+                      - binary_sensor.template.publish:
+                          id: button_5_pressed
+                          state: OFF
 
-          // Button icon with per-button color
-          it.print(x + 32, y + 32, id(mdi_icons), icon_colors[btn], TextAlign::CENTER, icons[btn]);
-        }
-      }
+              - button:
+                  id: btn_6
+                  grid_cell_column_pos: 1
+                  grid_cell_row_pos: 1
+                  grid_cell_x_align: STRETCH
+                  grid_cell_y_align: STRETCH
+                  bg_color: default_button_bg_color
+                  pressed:
+                    bg_color: default_button_pressed_bg_color
+                  widgets:
+                    - label:
+                        id: lbl_btn_6
+                        text: "󰏘"
+                        text_font: mdi_icons
+                        text_color: btn_6_color
+                        align: center
+                  on_click:
+                    then:
+                      - binary_sensor.template.publish:
+                          id: button_6_pressed
+                          state: ON
+                      - delay: 500ms
+                      - binary_sensor.template.publish:
+                          id: button_6_pressed
+                          state: OFF
 
+              - button:
+                  id: btn_7
+                  grid_cell_column_pos: 2
+                  grid_cell_row_pos: 1
+                  grid_cell_x_align: STRETCH
+                  grid_cell_y_align: STRETCH
+                  bg_color: default_button_bg_color
+                  pressed:
+                    bg_color: default_button_pressed_bg_color
+                  widgets:
+                    - label:
+                        id: lbl_btn_7
+                        text: "󰏘"
+                        text_font: mdi_icons
+                        text_color: btn_7_color
+                        align: center
+                  on_click:
+                    then:
+                      - binary_sensor.template.publish:
+                          id: button_7_pressed
+                          state: ON
+                      - delay: 500ms
+                      - binary_sensor.template.publish:
+                          id: button_7_pressed
+                          state: OFF
+
+              - button:
+                  id: btn_8
+                  grid_cell_column_pos: 3
+                  grid_cell_row_pos: 1
+                  grid_cell_x_align: STRETCH
+                  grid_cell_y_align: STRETCH
+                  bg_color: default_button_bg_color
+                  pressed:
+                    bg_color: default_button_pressed_bg_color
+                  widgets:
+                    - label:
+                        id: lbl_btn_8
+                        text: "󰏘"
+                        text_font: mdi_icons
+                        text_color: btn_8_color
+                        align: center
+                  on_click:
+                    then:
+                      - binary_sensor.template.publish:
+                          id: button_8_pressed
+                          state: ON
+                      - delay: 500ms
+                      - binary_sensor.template.publish:
+                          id: button_8_pressed
+                          state: OFF
+
+              - button:
+                  id: btn_9
+                  grid_cell_column_pos: 0
+                  grid_cell_row_pos: 2
+                  grid_cell_x_align: STRETCH
+                  grid_cell_y_align: STRETCH
+                  bg_color: default_button_bg_color
+                  pressed:
+                    bg_color: default_button_pressed_bg_color
+                  widgets:
+                    - label:
+                        id: lbl_btn_9
+                        text: "󰏘"
+                        text_font: mdi_icons
+                        text_color: btn_9_color
+                        align: center
+                  on_click:
+                    then:
+                      - binary_sensor.template.publish:
+                          id: button_9_pressed
+                          state: ON
+                      - delay: 500ms
+                      - binary_sensor.template.publish:
+                          id: button_9_pressed
+                          state: OFF
+              - button:
+                  id: btn_10
+                  grid_cell_column_pos: 1
+                  grid_cell_row_pos: 2
+                  grid_cell_x_align: STRETCH
+                  grid_cell_y_align: STRETCH
+                  checkable: true
+                  widgets:
+                    - label:
+                        id: lbl_btn_10
+                        text: "󱁑"
+                        text_font: mdi_icons
+                        align: center
+                  on_click:
+                    then:
+                      - homeassistant.action:
+                          action: light.toggle
+                          data:
+                            entity_id: light.office_ambient_lights
+                      - binary_sensor.template.publish:
+                          id: button_10_pressed
+                          state: ON
+                      - delay: 500ms
+                      - binary_sensor.template.publish:
+                          id: button_10_pressed
+                          state: OFF
+              - button:
+                  id: btn_11
+                  grid_cell_column_pos: 2
+                  grid_cell_row_pos: 2
+                  grid_cell_x_align: STRETCH
+                  grid_cell_y_align: STRETCH
+                  checkable: true
+                  widgets:
+                    - label:
+                        id: lbl_btn_11
+                        text: "󰈐"
+                        text_font: mdi_icons
+                        align: center
+                  on_click:
+                    then:
+                      - homeassistant.action:
+                          action: switch.toggle
+                          data:
+                            entity_id: switch.office_fan_plug
+                      - binary_sensor.template.publish:
+                          id: button_11_pressed
+                          state: ON
+                      - delay: 500ms
+                      - binary_sensor.template.publish:
+                          id: button_11_pressed
+                          state: OFF
+
+              - button:
+                  id: btn_12
+                  grid_cell_column_pos: 3
+                  grid_cell_row_pos: 2
+                  grid_cell_x_align: STRETCH
+                  grid_cell_y_align: STRETCH
+                  checkable: true
+                  widgets:
+                    - label:
+                        id: lbl_btn_12
+                        text: "󰤝"
+                        text_font: mdi_icons
+                        align: center
+                  on_click:
+                    then:
+                      - homeassistant.action:
+                          action: light.toggle
+                          data:
+                            entity_id: light.office_light
+                      - binary_sensor.template.publish:
+                          id: button_12_pressed
+                          state: ON
+                      - delay: 500ms
+                      - binary_sensor.template.publish:
+                          id: button_12_pressed
+                          state: OFF
